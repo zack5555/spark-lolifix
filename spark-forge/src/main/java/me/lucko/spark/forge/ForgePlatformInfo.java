@@ -18,12 +18,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.platform.PlatformInfo;
 
-import net.minecraftforge.versions.forge.ForgeVersion;
-import net.minecraftforge.versions.mcp.MCPVersion;
+import net.minecraftforge.common.ForgeVersion;
 
 public class ForgePlatformInfo implements PlatformInfo {
     private final Type type;
@@ -49,6 +52,6 @@ public class ForgePlatformInfo implements PlatformInfo {
 
     @Override
     public String getMinecraftVersion() {
-        return MCPVersion.getMCVersion();
+        return ForgeVersion.mcVersion;
     }
 }

@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = 'me.lucko'
-    version = '1.10-SNAPSHOT'
+    version = '1.11-SNAPSHOT'
 }
 
 subprojects {
@@ -14,15 +14,18 @@ subprojects {
     apply plugin: 'org.cadixdev.licenser'
 
     ext {
-        baseVersion = '1.10'
-        patchVersion = determinePatchVersion()
+        baseVersion = '1.11'
+        //patchVersion = determinePatchVersion()
+        patchVersion = '0'
         pluginVersion = baseVersion + '.' + patchVersion
         pluginDescription = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
     }
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
-        options.release = 8
+        if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
+            options.release = 8
+        }
     }
 
     processResources {

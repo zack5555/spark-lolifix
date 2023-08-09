@@ -18,13 +18,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.common;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import me.lucko.bytesocks.client.BytesocksClient;
-import me.lucko.bytesocks.client.BytesocksClientFactory;
 import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.api.SparkApi;
 import me.lucko.spark.common.command.Arguments;
@@ -56,7 +58,6 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.TemporaryFiles;
-import me.lucko.spark.common.ws.TrustedKeyStore;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -99,8 +100,10 @@ public class SparkPlatform {
     private final Configuration configuration;
     private final String viewerUrl;
     private final BytebinClient bytebinClient;
-    private final BytesocksClient bytesocksClient;
-    private final TrustedKeyStore trustedKeyStore;
+    //TODO:Fix sockets
+    //private final BytesocksClient bytesocksClient;
+    //TODO:Fix sockets
+    //private final TrustedKeyStore trustedKeyStore;
     private final boolean disableResponseBroadcast;
     private final List<CommandModule> commandModules;
     private final List<Command> commands;
@@ -125,11 +128,14 @@ public class SparkPlatform {
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
         String bytebinUrl = this.configuration.getString("bytebinUrl", "https://spark-usercontent.lucko.me/");
-        String bytesocksHost = this.configuration.getString("bytesocksHost", "spark-usersockets.lucko.me");
+        //TODO:Fix sockets
+        //String bytesocksHost = this.configuration.getString("bytesocksHost", "spark-usersockets.lucko.me");
 
         this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
-        this.bytesocksClient = BytesocksClientFactory.newClient(bytesocksHost, "spark-plugin");
-        this.trustedKeyStore = new TrustedKeyStore(this.configuration);
+        //TODO:Fix sockets
+        //this.bytesocksClient = BytesocksClientFactory.newClient(bytesocksHost, "spark-plugin");
+        //TODO:Fix sockets
+        //this.trustedKeyStore = new TrustedKeyStore(this.configuration);
 
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
 
@@ -241,14 +247,18 @@ public class SparkPlatform {
     public BytebinClient getBytebinClient() {
         return this.bytebinClient;
     }
-
+    //TODO:Fix sockets
+/*
     public BytesocksClient getBytesocksClient() {
         return this.bytesocksClient;
     }
-
+ */
+    //TODO:Fix sockets
+/*
     public TrustedKeyStore getTrustedKeyStore() {
         return this.trustedKeyStore;
     }
+ */
 
     public boolean shouldBroadcastResponse() {
         return !this.disableResponseBroadcast;
@@ -457,6 +467,7 @@ public class SparkPlatform {
         }
 
         String alias = arguments.remove(0);
+
         for (Command command : commands) {
             if (command.aliases().contains(alias)) {
                 return command.tabCompleter().completions(this, sender, arguments);

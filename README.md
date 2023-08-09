@@ -1,17 +1,24 @@
-<h1 align="center">
+<h2 align="center">
 	<img
-		alt="spark"
-		src="https://i.imgur.com/ykHn9vx.png">
-</h1>
+		alt="sparkunforged"
+		src="https://i.imgur.com/CpIrrwp.png"
+        width="300" 
+        height="300">
+</h2>
 
 <h3 align="center">
-  spark is a performance profiler for Minecraft clients, servers and proxies.
+  Spark Unforged is a backport of spark to bring updated features to 1.12.2
 </h3>
+
+**Spark Unforged is forked from spark and licensed under GNU GPLv3**
+* Original Project: (https://github.com/lucko/spark)
+* Original License: (https://github.com/lucko/spark/blob/master/LICENSE.txt)
 
 #### Useful Links
 * [**Website**](https://spark.lucko.me/) - browse the project homepage
 * [**Documentation**](https://spark.lucko.me/docs) - read documentation and usage guides
-* [**Downloads**](https://spark.lucko.me/download) - latest plugin/mod downloads
+* [**Downloads (Original)**](https://spark.lucko.me/download) - latest plugin/mod downloads
+* [**Downloads (Unforged)**](https://www.curseforge.com/minecraft/mc-mods/spark-unforged/files) - latest plugin/mod downloads
 
 
 ## What does spark do?

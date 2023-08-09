@@ -18,11 +18,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
 
-import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
@@ -44,7 +47,6 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.MethodDisambiguator;
-import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
 import net.kyori.adventure.text.Component;
@@ -78,7 +80,7 @@ public class SamplerModule implements CommandModule {
                 .aliases("profiler", "sampler")
                 .allowSubCommand(true)
                 .argumentUsage("info", "", null)
-                .argumentUsage("open", "", null)
+                //.argumentUsage("open", "", null)//TODO:Fix sockets
                 .argumentUsage("start", "timeout", "timeout seconds")
                 .argumentUsage("start", "thread *", null)
                 .argumentUsage("start", "thread", "thread name")
@@ -106,7 +108,7 @@ public class SamplerModule implements CommandModule {
                     }
 
                     return TabCompleter.create()
-                            .at(0, CompletionSupplier.startsWith(Arrays.asList("info", "start", "open", "stop", "cancel")))
+                            .at(0, CompletionSupplier.startsWith(Arrays.asList("info", "start", /*"open",*/ "stop", "cancel")))
                             .from(1, CompletionSupplier.startsWith(opts))
                             .complete(arguments);
                 })
@@ -122,6 +124,8 @@ public class SamplerModule implements CommandModule {
             return;
         }
 
+        //TODO:Fix sockets
+/*
         if (subCommand.equals("open") || arguments.boolFlag("open")) {
             profilerOpen(platform, sender, resp, arguments);
             return;
@@ -131,6 +135,7 @@ public class SamplerModule implements CommandModule {
             profilerTrustViewer(platform, sender, resp, arguments);
             return;
         }
+ */
 
         if (subCommand.equals("cancel") || arguments.boolFlag("cancel")) {
             profilerCancel(platform, resp);
@@ -267,8 +272,9 @@ public class SamplerModule implements CommandModule {
             resp.broadcastPrefixed(text("It will run in the background until it is stopped by an admin."));
             resp.broadcastPrefixed(text("To stop the profiler and upload the results, run:"));
             resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler stop"));
-            resp.broadcastPrefixed(text("To view the profiler while it's running, run:"));
-            resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler open"));
+            //TODO:Fix sockets
+            //resp.broadcastPrefixed(text("To view the profiler while it's running, run:"));
+            //resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler open"));
         } else {
             resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + FormatUtil.formatSeconds(timeoutSeconds) + "."));
         }
@@ -319,8 +325,9 @@ public class SamplerModule implements CommandModule {
                 resp.replyPrefixed(text("So far, it has profiled for " + FormatUtil.formatSeconds(runningTime) + "."));
             }
 
-            resp.replyPrefixed(text("To view the profiler while it's running, run:"));
-            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler open"));
+            //TODO:Fix sockets
+            //resp.replyPrefixed(text("To view the profiler while it's running, run:"));
+            //resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler open"));
 
             long timeout = sampler.getAutoEndTime();
             if (timeout == -1) {
@@ -336,6 +343,8 @@ public class SamplerModule implements CommandModule {
         }
     }
 
+    //TODO:Fix sockets
+/*
     private void profilerOpen(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         BytesocksClient bytesocksClient = platform.getBytesocksClient();
         if (bytesocksClient == null) {
@@ -354,7 +363,8 @@ public class SamplerModule implements CommandModule {
         Sampler.ExportProps exportProps = getExportProps(platform, resp, arguments);
         handleOpen(platform, bytesocksClient, resp, sampler, exportProps);
     }
-
+ */
+/*
     private void profilerTrustViewer(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         Set<String> ids = arguments.stringFlag("id");
         if (ids.isEmpty()) {
@@ -377,6 +387,7 @@ public class SamplerModule implements CommandModule {
             }
         }
     }
+ */
 
     private void profilerCancel(SparkPlatform platform, CommandResponseHandler resp) {
         Sampler sampler = platform.getSamplerContainer().getActiveSampler();
@@ -462,6 +473,8 @@ public class SamplerModule implements CommandModule {
         }
     }
 
+    //TODO:Fix sockets
+/*
     private void handleOpen(SparkPlatform platform, BytesocksClient bytesocksClient, CommandResponseHandler resp, Sampler sampler, Sampler.ExportProps exportProps) {
         try {
             ViewerSocket socket = new ViewerSocket(platform, bytesocksClient, exportProps);
@@ -487,6 +500,7 @@ public class SamplerModule implements CommandModule {
             e.printStackTrace();
         }
     }
+ */
 
     private Sampler.ExportProps getExportProps(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
         return new Sampler.ExportProps()

@@ -18,23 +18,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge.plugin;
 
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
-import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
-import me.lucko.spark.forge.ForgeExtraMetadataProvider;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
@@ -42,69 +37,65 @@ import me.lucko.spark.forge.ForgeTickReporter;
 import me.lucko.spark.forge.ForgeWorldInfoProvider;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.commands.CommandSource;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraftforge.client.event.RegisterClientCommandsEvent;
+import net.minecraft.command.ICommand;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
-public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
+public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements ICommand {
 
-    public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
-        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, Minecraft.getInstance());
+    public static void register(ForgeSparkMod mod) {
+        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, Minecraft.getMinecraft());
         plugin.enable();
+        MinecraftForge.EVENT_BUS.register(plugin);
+        ClientCommandHandler.instance.registerCommand(plugin);
     }
 
     private final Minecraft minecraft;
     private final ThreadDumper gameThreadDumper;
 
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper;
+    }
+
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
-        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.gameThread);
+        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.thread);
+        //this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
     }
 
     @Override
     public void enable() {
         super.enable();
-
-        // register listeners
-        MinecraftForge.EVENT_BUS.register(this);
-    }
-
-    @SubscribeEvent
-    public void onCommandRegister(RegisterClientCommandsEvent e) {
-        registerCommands(e.getDispatcher(), this, this, "sparkc", "sparkclient");
     }
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        String[] args = processArgs(context, false, "sparkc", "sparkclient");
-        if (args == null) {
-            return 0;
-        }
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
+        String[] proc = processArgs(args, false);//, "sparkc", "sparkclient");
+        //if(proc == null) return;
 
-        this.platform.executeCommand(new ForgeCommandSender(context.getSource().getEntity(), this), args);
-        return Command.SINGLE_SUCCESS;
+        this.platform.executeCommand(new ForgeCommandSender(sender, this), proc);
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context, true, "/sparkc", "/sparkclient");
-        if (args == null) {
-            return Suggestions.empty();
-        }
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
+        String[] proc = processArgs(args, true);//, "/sparkc", "/sparkclient");
+        //if(proc == null) return Collections.emptyList();
 
-        return generateSuggestions(new ForgeCommandSender(context.getSource().getEntity(), this), args, builder);
+        return generateSuggestions(new ForgeCommandSender(sender, this), proc);
     }
 
     @Override
-    public boolean hasPermission(CommandSource sender, String permission) {
+    public boolean hasPermission(ICommandSender sender, String permission) {
         return true;
     }
 
@@ -115,12 +106,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public void executeSync(Runnable task) {
-        this.minecraft.executeIfPossible(task);
-    }
-
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return this.gameThreadDumper;
+        this.minecraft.addScheduledTask(task);
     }
 
     @Override
@@ -139,11 +125,6 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
-    public MetadataProvider createExtraMetadataProvider() {
-        return new ForgeExtraMetadataProvider(this.minecraft.getResourcePackRepository());
-    }
-
-    @Override
     public PlatformInfo getPlatformInfo() {
         return new ForgePlatformInfo(PlatformInfo.Type.CLIENT);
     }
@@ -151,5 +132,35 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public String getCommandName() {
         return "sparkc";
+    }
+
+    @Override
+    public String getName() {
+        return getCommandName();
+    }
+
+    @Override
+    public String getUsage(ICommandSender iCommandSender) {
+        return "/" + getCommandName();
+    }
+
+    @Override
+    public List<String> getAliases() {
+        return Collections.singletonList(getCommandName());
+    }
+
+    @Override
+    public boolean checkPermission(MinecraftServer minecraftServer, ICommandSender sender) {
+        return this.platform.hasPermissionForAnyCommand(new ForgeCommandSender(sender, this));
+    }
+
+    @Override
+    public boolean isUsernameIndex(String[] strings, int i) {
+        return false;
+    }
+
+    @Override
+    public int compareTo(ICommand o) {
+        return getCommandName().compareTo(o.getName());
     }
 }

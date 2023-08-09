@@ -18,6 +18,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.common.SparkPlatform;
@@ -32,12 +40,9 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
-import me.lucko.spark.common.ws.ViewerSocket;
-import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -78,7 +83,7 @@ public abstract class AbstractSampler implements Sampler {
     protected Map<String, GarbageCollectorStatistics> initialGcStats;
 
     /** A set of viewer sockets linked to the sampler */
-    protected List<ViewerSocket> viewerSockets = new ArrayList<>();
+    //protected List<ViewerSocket> viewerSockets = new ArrayList<>();
 
     protected AbstractSampler(SparkPlatform platform, SamplerSettings settings) {
         this.platform = platform;
@@ -128,11 +133,16 @@ public abstract class AbstractSampler implements Sampler {
     @Override
     public void stop(boolean cancelled) {
         this.windowStatisticsCollector.stop();
+        //TODO:Fix sockets
+        /*
         for (ViewerSocket viewerSocket : this.viewerSockets) {
             viewerSocket.processSamplerStopped(this);
         }
+        */
     }
 
+    //TODO:Fix sockets
+/*
     @Override
     public void attachSocket(ViewerSocket socket) {
         this.viewerSockets.add(socket);
@@ -170,6 +180,7 @@ public abstract class AbstractSampler implements Sampler {
             e.printStackTrace();
         }
     }
+ */
 
     protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender.Data creator, String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()

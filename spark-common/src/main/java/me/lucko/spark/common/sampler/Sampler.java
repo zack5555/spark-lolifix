@@ -18,17 +18,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SocketChannelInfo;
 
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -47,19 +49,26 @@ public interface Sampler {
      */
     void stop(boolean cancelled);
 
+    //TODO:Fix sockets
     /**
      * Attaches a viewer socket to this sampler.
      *
      * @param socket the socket
      */
+    /*
     void attachSocket(ViewerSocket socket);
 
+     */
+
+    //TODO:Fix sockets
     /**
      * Gets the sockets attached to this sampler.
      *
      * @return the attached sockets
      */
+    /*
     Collection<ViewerSocket> getAttachedSockets();
+     */
 
     /**
      * Gets the time when the sampler started (unix timestamp in millis)

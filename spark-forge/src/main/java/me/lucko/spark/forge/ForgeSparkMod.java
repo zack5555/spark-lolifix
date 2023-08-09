@@ -18,56 +18,67 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge;
 
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.IExtensionPoint;
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.network.NetworkConstants;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
+import net.minecraftforge.fml.relauncher.Side;
 
 import java.nio.file.Path;
 
-@Mod("spark")
+@Mod(
+        modid = "spark",
+        name = "Spark Unforged",
+        version = "@version@",
+        acceptableRemoteVersions = "*"
+)
 public class ForgeSparkMod {
 
-    private ModContainer container;
     private Path configDirectory;
+    private ForgeServerSparkPlugin activeServerPlugin;
 
     public ForgeSparkMod() {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientInit);
-        MinecraftForge.EVENT_BUS.register(this);
-
-        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+        //ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
 
     public String getVersion() {
-        return this.container.getModInfo().getVersion().toString();
+        return ForgeSparkMod.class.getAnnotation(Mod.class).version();
     }
 
-    public void setup(FMLCommonSetupEvent e) {
-        this.container = ModLoadingContext.get().getActiveContainer();
-        this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent e) {
+        this.configDirectory = e.getModConfigurationDirectory().toPath();
     }
 
-    public void clientInit(FMLClientSetupEvent e) {
-        ForgeClientSparkPlugin.register(this, e);
+    @Mod.EventHandler
+    public void clientInit(FMLInitializationEvent e) {
+        if(FMLCommonHandler.instance().getSide() == Side.CLIENT) {
+            ForgeClientSparkPlugin.register(this);
+        }
     }
 
-    @SubscribeEvent
-    public void serverInit(ServerAboutToStartEvent e) {
-        ForgeServerSparkPlugin.register(this, e);
+    @Mod.EventHandler
+    public void serverInit(FMLServerStartingEvent e) {
+        this.activeServerPlugin = ForgeServerSparkPlugin.register(this, e);
+    }
+
+    @Mod.EventHandler
+    public void serverStop(FMLServerStoppingEvent e) {
+        if(this.activeServerPlugin != null) {
+            this.activeServerPlugin.disable();
+            this.activeServerPlugin = null;
+        }
     }
 
     public Path getConfigDirectory() {

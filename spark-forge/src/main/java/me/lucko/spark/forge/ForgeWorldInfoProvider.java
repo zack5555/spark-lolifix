@@ -18,6 +18,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge;
 
 import it.unimi.dsi.fastutil.longs.LongIterator;
@@ -28,34 +32,30 @@ import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.entity.EntityLookup;
-import net.minecraft.world.level.entity.EntitySection;
-import net.minecraft.world.level.entity.EntitySectionStorage;
-import net.minecraft.world.level.entity.PersistentEntitySectionManager;
-import net.minecraft.world.level.entity.TransientEntitySectionManager;
+import net.minecraft.util.ClassInheritanceMultiMap;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.ChunkProviderServer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.*;
 
 public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
 
-    protected List<ForgeChunkInfo> getChunksFromCache(EntitySectionStorage<Entity> cache) {
-        LongSet loadedChunks = cache.getAllChunksWithExistingSections();
+    protected List<ForgeChunkInfo> getChunksFromCache(ChunkProviderServer provider) {
+        LongSet loadedChunks = provider.loadedChunks.keySet();
         List<ForgeChunkInfo> list = new ArrayList<>(loadedChunks.size());
 
         for (LongIterator iterator = loadedChunks.iterator(); iterator.hasNext(); ) {
-            long chunkPos = iterator.nextLong();
-            Stream<EntitySection<Entity>> sections = cache.getExistingSectionsInChunk(chunkPos);
+            long chunk = iterator.nextLong();
+            ClassInheritanceMultiMap<Entity>[] sections = provider.loadedChunks.get(chunk).getEntityLists();
+            ChunkPos pos = provider.loadedChunks.get(chunk).getPos();
 
-            list.add(new ForgeChunkInfo(chunkPos, sections));
+            list.add(new ForgeChunkInfo(pos, sections));
         }
 
         return list;
@@ -70,16 +70,13 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
 
         @Override
         public CountsResult pollCounts() {
-            int players = this.server.getPlayerCount();
+            int players = this.server.getCurrentPlayerCount();
             int entities = 0;
             int chunks = 0;
 
-            for (ServerLevel level : this.server.getAllLevels()) {
-                PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
-                EntityLookup<Entity> entityIndex = entityManager.visibleEntityStorage;
-
-                entities += entityIndex.count();
-                chunks += level.getChunkSource().getLoadedChunksCount();
+            for(WorldServer level : this.server.worlds) {
+                entities += level.loadedEntityList.size();
+                chunks += level.getChunkProvider().getLoadedChunkCount();
             }
 
             return new CountsResult(players, entities, -1, chunks);
@@ -89,12 +86,9 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
         public ChunksResult<ForgeChunkInfo> pollChunks() {
             ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
-            for (ServerLevel level : this.server.getAllLevels()) {
-                PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
-                EntitySectionStorage<Entity> cache = entityManager.sectionStorage;
-
-                List<ForgeChunkInfo> list = getChunksFromCache(cache);
-                data.put(level.dimension().location().getPath(), list);
+            for(WorldServer level : this.server.worlds) {
+                List<ForgeChunkInfo> list = getChunksFromCache(level.getChunkProvider());
+                data.put(level.provider.getDimensionType().getName(), list);
             }
 
             return data;
@@ -110,16 +104,14 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
 
         @Override
         public CountsResult pollCounts() {
-            ClientLevel level = this.client.level;
+            WorldClient level = this.client.world;
             if (level == null) {
                 return null;
             }
 
-            TransientEntitySectionManager<Entity> entityManager = level.entityStorage;
-            EntityLookup<Entity> entityIndex = entityManager.entityStorage;
-
-            int entities = entityIndex.count();
-            int chunks = level.getChunkSource().getLoadedChunksCount();
+            int entities = level.loadedEntityList.size();
+            //int chunks = level.getChunkProvider().getLoadedChunkCount();
+            int chunks = 0;
 
             return new CountsResult(-1, entities, -1, chunks);
         }
@@ -127,48 +119,42 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
         @Override
         public ChunksResult<ForgeChunkInfo> pollChunks() {
             ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
-
+/*
             ClientLevel level = this.client.level;
-            if (level == null) {
-                return null;
-            }
-
-            TransientEntitySectionManager<Entity> entityManager = level.entityStorage;
-            EntitySectionStorage<Entity> cache = entityManager.sectionStorage;
+            if(level == null) return null;
 
             List<ForgeChunkInfo> list = getChunksFromCache(cache);
             data.put(level.dimension().location().getPath(), list);
 
+ */
             return data;
         }
     }
 
-    static final class ForgeChunkInfo extends AbstractChunkInfo<EntityType<?>> {
-        private final CountMap<EntityType<?>> entityCounts;
+    static final class ForgeChunkInfo extends AbstractChunkInfo<Entity> {
+        private final CountMap<Entity> entityCounts;
 
-        ForgeChunkInfo(long chunkPos, Stream<EntitySection<Entity>> entities) {
-            super(ChunkPos.getX(chunkPos), ChunkPos.getZ(chunkPos));
+        ForgeChunkInfo(ChunkPos chunkPos, ClassInheritanceMultiMap<Entity>[] entities) {
+            super(chunkPos.x, chunkPos.z);
 
             this.entityCounts = new CountMap.Simple<>(new HashMap<>());
-            entities.forEach(section -> {
-                if (section.getStatus().isAccessible()) {
-                    section.getEntities().forEach(entity ->
-                            this.entityCounts.increment(entity.getType())
-                    );
-                }
-            });
+            for(ClassInheritanceMultiMap<Entity> map : entities) {
+                map.forEach(this.entityCounts::increment);
+            }
         }
 
         @Override
-        public CountMap<EntityType<?>> getEntityCounts() {
+        public CountMap<Entity> getEntityCounts() {
             return this.entityCounts;
         }
 
         @Override
-        public String entityTypeName(EntityType<?> type) {
-            return EntityType.getKey(type).toString();
+        public String entityTypeName(Entity type) {
+            return nonNullName(EntityList.getKey(type), type);
+        }
+
+        private static String nonNullName(ResourceLocation res, Entity ent) {
+            return (res != null) ? res.toString() : ent.getClass().getName();
         }
     }
-
-
 }

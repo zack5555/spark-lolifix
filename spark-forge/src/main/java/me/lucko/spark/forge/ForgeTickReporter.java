@@ -18,14 +18,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
 
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class ForgeTickReporter extends SimpleTickReporter implements TickReporter {
     private final TickEvent.Type type;
@@ -36,14 +40,17 @@ public class ForgeTickReporter extends SimpleTickReporter implements TickReporte
 
     @SubscribeEvent
     public void onTick(TickEvent e) {
-        if (e.type != this.type) {
-            return;
-        }
+        if(e.type != this.type) return;
 
         switch (e.phase) {
-            case START -> onStart();
-            case END -> onEnd();
-            default -> throw new AssertionError(e.phase);
+            case START:
+                onStart();
+                break;
+            case END:
+                onEnd();
+                break;
+            default:
+                throw new AssertionError(e.phase);
         }
     }
 

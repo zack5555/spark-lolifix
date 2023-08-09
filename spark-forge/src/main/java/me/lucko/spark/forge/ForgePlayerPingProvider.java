@@ -18,14 +18,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge;
 
 import com.google.common.collect.ImmutableMap;
 
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 
@@ -39,8 +43,8 @@ public class ForgePlayerPingProvider implements PlayerPingProvider {
     @Override
     public Map<String, Integer> poll() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
-        for (ServerPlayer player : this.server.getPlayerList().getPlayers()) {
-            builder.put(player.getGameProfile().getName(), player.latency);
+        for(EntityPlayerMP player : this.server.getPlayerList().getPlayers()) {
+            builder.put(player.getGameProfile().getName(), player.ping);
         }
         return builder.build();
     }

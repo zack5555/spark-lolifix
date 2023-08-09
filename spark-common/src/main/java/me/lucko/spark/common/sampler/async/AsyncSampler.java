@@ -18,6 +18,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.common.sampler.async;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -29,7 +33,6 @@ import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.SparkThreadFactory;
-import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.util.concurrent.Executors;
@@ -150,7 +153,8 @@ public class AsyncSampler extends AbstractSampler {
                 this.dataAggregator.pruneData(predicate);
                 this.windowStatisticsCollector.pruneStatistics(predicate);
 
-                this.scheduler.execute(this::processWindowRotate);
+                //TODO:Fix sockets
+                //this.scheduler.execute(this::processWindowRotate);
             }
         } catch (Throwable e) {
             e.printStackTrace();
@@ -201,6 +205,8 @@ public class AsyncSampler extends AbstractSampler {
         }
     }
 
+    //TODO:Fix sockets
+/*
     @Override
     public void attachSocket(ViewerSocket socket) {
         super.attachSocket(socket);
@@ -209,6 +215,8 @@ public class AsyncSampler extends AbstractSampler {
             this.socketStatisticsTask = this.scheduler.scheduleAtFixedRate(this::sendStatisticsToSocket, 10, 10, TimeUnit.SECONDS);
         }
     }
+
+ */
 
     @Override
     public SamplerMode getMode() {

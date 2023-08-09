@@ -18,8 +18,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.ws;
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
 
+package me.lucko.spark.common.ws;
+//TODO:Fix sockets
+/*
 import com.google.protobuf.ByteString;
 
 import me.lucko.bytesocks.client.BytesocksClient;
@@ -35,23 +40,23 @@ import java.util.Base64;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
-/**
+**
  * Controls a websocket connection between a spark server (the plugin/mod) and a spark client (the web viewer).
- */
+ *
 public class ViewerSocketConnection implements BytesocksClient.Listener, AutoCloseable {
 
-    /** The protocol version */
+    ** The protocol version *
     public static final int VERSION_1 = 1;
-    /** The crypto algorithm used to sign/verify messages sent between the server and client */
+    ** The crypto algorithm used to sign/verify messages sent between the server and client *
     public static final CryptoAlgorithm CRYPTO = CryptoAlgorithm.RSA2048;
 
-    /** The platform */
+    ** The platform *
     private final SparkPlatform platform;
-    /** The underlying listener */
+    ** The underlying listener *
     private final Listener listener;
-    /** The private key used to sign messages sent from this connection */
+    ** The private key used to sign messages sent from this connection *
     private final PrivateKey privateKey;
-    /** The bytesocks socket */
+    ** The bytesocks socket *
     private final BytesocksClient.Socket socket;
 
     public ViewerSocketConnection(SparkPlatform platform, BytesocksClient client, Listener listener) throws Exception {
@@ -63,38 +68,38 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
 
     public interface Listener {
 
-        /**
+        **
          * Checks if the given public key is trusted
          *
          * @param publicKey the public key
          * @return true if trusted
-         */
+         *
         boolean isKeyTrusted(PublicKey publicKey);
 
-        /**
+        **
          * Handles a packet sent to the socket
          *
          * @param packet the packet that was sent
          * @param verified if the packet was signed by a trusted key
          * @param publicKey the public key the packet was signed with
-         */
+         *
         void onPacket(PacketWrapper packet, boolean verified, PublicKey publicKey) throws Exception;
     }
 
-    /**
+    **
      * Gets the bytesocks channel id
      *
      * @return the channel id
-     */
+     *
     public String getChannelId() {
         return this.socket.getChannelId();
     }
 
-    /**
+    **
      * Gets if the underlying socket is open
      *
      * @return true if the socket is open
-     */
+     *
     public boolean isOpen() {
         return this.socket.isOpen();
     }
@@ -121,11 +126,11 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
         //this.platform.getPlugin().log(Level.INFO, "Socket closed with status " + statusCode + " and reason " + reason);
     }
 
-    /**
+    **
      * Sends a packet to the socket.
      *
      * @param packetBuilder the builder to construct the wrapper packet
-     */
+     *
     public void sendPacket(Consumer<PacketWrapper.Builder> packetBuilder) {
         PacketWrapper.Builder builder = PacketWrapper.newBuilder();
         packetBuilder.accept(builder);
@@ -139,11 +144,11 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
         }
     }
 
-    /**
+    **
      * Sends a packet to the socket.
      *
      * @param packet the packet to send
-     */
+     *
     private void sendPacket(PacketWrapper packet) throws Exception {
         ByteString msg = packet.toByteString();
 
@@ -161,33 +166,33 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
         );
     }
 
-    /**
+    **
      * Sends a raw packet to the socket.
      *
      * @param packet the packet to send
-     */
+     *
     private void sendRawPacket(RawPacket packet) throws IOException {
         byte[] buf = packet.toByteArray();
         String encoded = Base64.getEncoder().encodeToString(buf);
         this.socket.send(encoded);
     }
 
-    /**
+    **
      * Decodes a raw packet sent to the socket.
      *
      * @param data the encoded data
      * @return the decoded packet
-     */
+     *
     private RawPacket decodeRawPacket(CharSequence data) throws IOException {
         byte[] buf = Base64.getDecoder().decode(data.toString());
         return RawPacket.parseFrom(buf);
     }
 
-    /**
+    **
      * Handles a raw packet sent to the socket
      *
      * @param packet the packet
-     */
+     *
     private void handleRawPacket(RawPacket packet) throws Exception {
         int version = packet.getVersion();
         if (version != VERSION_1) {
@@ -213,6 +218,7 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
 
     @Override
     public void close() {
-        this.socket.close(1001 /* going away */, "spark plugin disconnected");
+        this.socket.close(1001 * going away *, "spark plugin disconnected");
     }
 }
+*/

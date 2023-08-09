@@ -18,19 +18,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge.plugin;
 
-import com.google.common.collect.ImmutableMap;
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -38,7 +32,6 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
-import me.lucko.spark.forge.ForgeExtraMetadataProvider;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgePlayerPingProvider;
 import me.lucko.spark.forge.ForgeServerConfigProvider;
@@ -47,164 +40,79 @@ import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import me.lucko.spark.forge.ForgeWorldInfoProvider;
 
-import net.minecraft.commands.CommandSource;
-import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.command.ICommand;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
-import net.minecraftforge.server.permission.events.PermissionGatherEvent;
-import net.minecraftforge.server.permission.nodes.PermissionNode;
-import net.minecraftforge.server.permission.nodes.PermissionNode.PermissionResolver;
-import net.minecraftforge.server.permission.nodes.PermissionTypes;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
+public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements ICommand {
 
-    public static void register(ForgeSparkMod mod, ServerAboutToStartEvent event) {
+    public static ForgeServerSparkPlugin register(ForgeSparkMod mod, FMLServerStartingEvent event) {
         ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
+
+        event.registerServerCommand(plugin);
+        PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
+
+        return plugin;
     }
 
-    private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
-        if (player == null) {
-            return false;
-        }
-
-        MinecraftServer server = player.getServer();
-        if (server != null && server.isSingleplayerOwner(player.getGameProfile())) {
-            return true;
-        }
-
-        return player.hasPermissions(4);
-    };
-
     private final MinecraftServer server;
+
     private final ThreadDumper gameThreadDumper;
-    private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper;
+    }
 
     public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
-        this.gameThreadDumper = new ThreadDumper.Specific(server.getRunningThread());
+        this.gameThreadDumper = new ThreadDumper.Specific(server.serverThread);
     }
 
     @Override
     public void enable() {
         super.enable();
-
-        // register commands
-        registerCommands(this.server.getCommands().getDispatcher());
-
-        // register listeners
-        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @Override
     public void disable() {
         super.disable();
-
-        // unregister listeners
-        MinecraftForge.EVENT_BUS.unregister(this);
-    }
-
-    @SubscribeEvent
-    public void onDisable(ServerStoppingEvent event) {
-        if (event.getServer() == this.server) {
-            disable();
-        }
-    }
-
-    @SubscribeEvent
-    public void onPermissionGather(PermissionGatherEvent.Nodes e) {
-        // collect all possible permissions
-        List<String> permissions = this.platform.getCommands().stream()
-                .map(me.lucko.spark.common.command.Command::primaryAlias)
-                .collect(Collectors.toList());
-
-        // special case for the "spark" permission: map it to "spark.all"
-        permissions.add("all");
-
-        // register permissions with forge & keep a copy for lookup
-        ImmutableMap.Builder<String, PermissionNode<Boolean>> builder = ImmutableMap.builder();
-
-        Map<String, PermissionNode<?>> alreadyRegistered = e.getNodes().stream().collect(Collectors.toMap(PermissionNode::getNodeName, Function.identity()));
-
-        for (String permission : permissions) {
-            String permissionString = "spark." + permission;
-
-            // there's a weird bug where it seems that this listener can be called twice, causing an
-            // IllegalArgumentException to be thrown the second time e.addNodes is called.
-            PermissionNode<?> existing = alreadyRegistered.get(permissionString);
-            if (existing != null) {
-                //noinspection unchecked
-                builder.put(permissionString, (PermissionNode<Boolean>) existing);
-                continue;
-            }
-
-            PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, DEFAULT_PERMISSION_VALUE);
-            e.addNodes(node);
-            builder.put(permissionString, node);
-        }
-        this.registeredPermissions = builder.build();
-    }
-
-    @SubscribeEvent
-    public void onCommandRegister(RegisterCommandsEvent e) {
-        registerCommands(e.getDispatcher());
-    }
-
-    private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerCommands(dispatcher, this, this, "spark");
     }
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        String[] args = processArgs(context, false, "/spark", "spark");
-        if (args == null) {
-            return 0;
-        }
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
+        String[] proc = processArgs(args, false);//, "/spark", "spark");
+        //if(proc == null) return;
 
-        CommandSource source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
-        this.platform.executeCommand(new ForgeCommandSender(source, this), args);
-        return Command.SINGLE_SUCCESS;
+        this.platform.executeCommand(new ForgeCommandSender(sender, this), proc);
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context, true, "/spark", "spark");
-        if (args == null) {
-            return Suggestions.empty();
-        }
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
+        String[] proc = processArgs(args, true);//, "/spark", "spark");
+        //if(proc == null) return Collections.emptyList();
 
-        return generateSuggestions(new ForgeCommandSender(context.getSource().getPlayerOrException(), this), args, builder);
+        return generateSuggestions(new ForgeCommandSender(sender, this), proc);
     }
 
     @Override
-    public boolean hasPermission(CommandSource sender, String permission) {
-        if (sender instanceof ServerPlayer) {
-            if (permission.equals("spark")) {
-                permission = "spark.all";
-            }
-
-            PermissionNode<Boolean> permissionNode = this.registeredPermissions.get(permission);
-            if (permissionNode == null) {
-                throw new IllegalStateException("spark permission not registered: " + permission);
-            }
-            return PermissionAPI.getPermission((ServerPlayer) sender, permissionNode);
-        } else {
+    public boolean hasPermission(ICommandSender sender, String permission) {
+        if(sender instanceof EntityPlayer) {
+            return PermissionAPI.hasPermission((EntityPlayer)sender, permission);
+        }
+        else {
             return true;
         }
     }
@@ -219,12 +127,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public void executeSync(Runnable task) {
-        this.server.executeIfPossible(task);
-    }
-
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return this.gameThreadDumper;
+        this.server.addScheduledTask(task);
     }
 
     @Override
@@ -248,11 +151,6 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
-    public MetadataProvider createExtraMetadataProvider() {
-        return new ForgeExtraMetadataProvider(this.server.getPackRepository());
-    }
-
-    @Override
     public WorldInfoProvider createWorldInfoProvider() {
         return new ForgeWorldInfoProvider.Server(this.server);
     }
@@ -265,5 +163,35 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public String getCommandName() {
         return "spark";
+    }
+
+    @Override
+    public String getName() {
+        return getCommandName();
+    }
+
+    @Override
+    public String getUsage(ICommandSender iCommandSender) {
+        return "/" + getCommandName();
+    }
+
+    @Override
+    public List<String> getAliases() {
+        return Collections.singletonList(getCommandName());
+    }
+
+    @Override
+    public boolean checkPermission(MinecraftServer minecraftServer, ICommandSender sender) {
+        return this.platform.hasPermissionForAnyCommand(new ForgeCommandSender(sender, this));
+    }
+
+    @Override
+    public boolean isUsernameIndex(String[] strings, int i) {
+        return false;
+    }
+
+    @Override
+    public int compareTo(ICommand o) {
+        return getCommandName().compareTo(o.getName());
     }
 }

@@ -18,6 +18,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
@@ -25,50 +29,52 @@ import me.lucko.spark.forge.plugin.ForgeSparkPlugin;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.commands.CommandSource;
-import net.minecraft.network.chat.Component.Serializer;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.rcon.RConConsoleSource;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.rcon.RconConsoleSource;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.util.text.ITextComponent;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public class ForgeCommandSender extends AbstractCommandSender<CommandSource> {
+public class ForgeCommandSender extends AbstractCommandSender<ICommandSender> {
     private final ForgeSparkPlugin plugin;
 
-    public ForgeCommandSender(CommandSource source, ForgeSparkPlugin plugin) {
+    public ForgeCommandSender(ICommandSender source, ForgeSparkPlugin plugin) {
         super(source);
         this.plugin = plugin;
     }
 
     @Override
     public String getName() {
-        if (super.delegate instanceof Player) {
-            return ((Player) super.delegate).getGameProfile().getName();
-        } else if (super.delegate instanceof MinecraftServer) {
+        if(super.delegate instanceof EntityPlayer) {
+            return ((EntityPlayer)super.delegate).getGameProfile().getName();
+        }
+        else if(super.delegate instanceof MinecraftServer) {
             return "Console";
-        } else if (super.delegate instanceof RconConsoleSource) {
+        }
+        else if(super.delegate instanceof RConConsoleSource) {
             return "RCON Console";
-        } else {
+        }
+        else {
             return "unknown:" + super.delegate.getClass().getSimpleName();
         }
     }
 
     @Override
     public UUID getUniqueId() {
-        if (super.delegate instanceof Player) {
-            return ((Player) super.delegate).getUUID();
+        if(super.delegate instanceof EntityPlayer) {
+            return ((EntityPlayer)super.delegate).getUniqueID();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
+        ITextComponent component = ITextComponent.Serializer.jsonToComponent(GsonComponentSerializer.gson().serialize(message));
         Objects.requireNonNull(component, "component");
-        super.delegate.sendSystemMessage(component);
+        super.delegate.sendMessage(component);
     }
 
     @Override

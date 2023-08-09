@@ -18,6 +18,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.common.sampler.java;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -30,7 +34,6 @@ import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.SparkThreadFactory;
-import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.lang.management.ManagementFactory;
@@ -140,6 +143,8 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         }
     }
 
+    //TODO:Fix sockets
+    /*
     @Override
     public void attachSocket(ViewerSocket socket) {
         super.attachSocket(socket);
@@ -148,6 +153,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             this.socketStatisticsTask = this.workerPool.scheduleAtFixedRate(this::sendStatisticsToSocket, 10, 10, TimeUnit.SECONDS);
         }
     }
+     */
 
     private final class InsertDataTask implements Runnable {
         private final ThreadInfo[] threadDumps;
@@ -182,7 +188,8 @@ public class JavaSampler extends AbstractSampler implements Runnable {
                 JavaSampler.this.dataAggregator.pruneData(predicate);
                 JavaSampler.this.windowStatisticsCollector.pruneStatistics(predicate);
 
-                JavaSampler.this.workerPool.execute(JavaSampler.this::processWindowRotate);
+                //TODO:Fix sockets
+                //JavaSampler.this.workerPool.execute(JavaSampler.this::processWindowRotate);
             }
         }
     }

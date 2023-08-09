@@ -18,20 +18,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
+
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
-import cpw.mods.modlauncher.TransformingClassLoader;
-
 public class ForgeClassSourceLookup implements ClassSourceLookup {
 
+    //TODO: figure out solution for this
     @Override
     public String identify(Class<?> clazz) {
+        /*
         if (clazz.getClassLoader() instanceof TransformingClassLoader) {
             String name = clazz.getModule().getName();
             return name.equals("forge") || name.equals("minecraft") ? null : name;
         }
+        */
         return null;
     }
 }

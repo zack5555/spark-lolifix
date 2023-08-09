@@ -18,8 +18,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.ws;
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
 
+package me.lucko.spark.common.ws;
+//TODO:Fix sockets
+/*
 import com.google.protobuf.ByteString;
 
 import me.lucko.bytesocks.client.BytesocksClient;
@@ -42,22 +47,22 @@ import java.security.PublicKey;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-/**
+**
  * Represents a connection with the spark viewer.
- */
+ *
 public class ViewerSocket implements ViewerSocketConnection.Listener, AutoCloseable {
 
-    /** Allow 60 seconds for the first client to connect */
+    ** Allow 60 seconds for the first client to connect *
     private static final long SOCKET_INITIAL_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
 
-    /** Once established, expect a ping at least once every 30 seconds */
+    ** Once established, expect a ping at least once every 30 seconds *
     private static final long SOCKET_ESTABLISHED_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 
-    /** The spark platform */
+    ** The spark platform *
     private final SparkPlatform platform;
-    /** The export props to use when exporting the sampler data */
+    ** The export props to use when exporting the sampler data *
     private final Sampler.ExportProps exportProps;
-    /** The underlying connection */
+    ** The underlying connection *
     private final ViewerSocketConnection socket;
 
     private boolean closed = false;
@@ -75,11 +80,11 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         this.platform.getPlugin().log(Level.INFO, "[Viewer - " + this.socket.getChannelId() + "] " + message);
     }
 
-    /**
+    **
      * Gets the initial payload to send to the viewer.
      *
      * @return the payload
-     */
+     *
     public SparkSamplerProtos.SocketChannelInfo getPayload() {
         return SparkSamplerProtos.SocketChannelInfo.newBuilder()
                 .setChannelId(this.socket.getChannelId())
@@ -91,11 +96,11 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         return !this.closed && this.socket.isOpen();
     }
 
-    /**
+    **
      * Called each time the sampler rotates to a new window.
      *
      * @param sampler the sampler
-     */
+     *
     public void processWindowRotate(AbstractSampler sampler) {
         if (this.closed) {
             return;
@@ -123,11 +128,11 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         }
     }
 
-    /**
+    **
      * Called when the sampler stops.
      *
      * @param sampler the sampler
-     */
+     *
     public void processSamplerStopped(AbstractSampler sampler) {
         if (this.closed) {
             return;
@@ -151,11 +156,11 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         return this.platform.getTrustedKeyStore().isKeyTrusted(publicKey);
     }
 
-    /**
+    **
      * Sends a message to the socket to say that the given client is now trusted.
      *
      * @param clientId the client id
-     */
+     *
     public void sendClientTrustedMessage(String clientId) {
         this.socket.sendPacket(builder -> builder.setServerConnectResponse(ServerConnectResponse.newBuilder()
                 .setClientId(clientId)
@@ -164,11 +169,11 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         ));
     }
 
-    /**
+    **
      * Sends a message to the socket to indicate that updated sampler data is available
      *
      * @param payloadId the payload id of the updated data
-     */
+     *
     public void sendUpdatedSamplerData(String payloadId) {
         this.socket.sendPacket(builder -> builder.setServerUpdateSampler(ServerUpdateSamplerData.newBuilder()
                 .setPayloadId(payloadId)
@@ -177,12 +182,12 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         this.lastPayloadId = payloadId;
     }
 
-    /**
+    **
      * Sends a message to the socket with updated statistics
      *
      * @param platform the platform statistics
      * @param system the system statistics
-     */
+     *
     public void sendUpdatedStatistics(SparkProtos.PlatformStatistics platform, SparkProtos.SystemStatistics system) {
         this.socket.sendPacket(builder -> builder.setServerUpdateStatistics(ServerUpdateStatistics.newBuilder()
                 .setPlatform(platform)
@@ -251,5 +256,5 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
     private static String hashPublicKey(PublicKey publicKey) {
         return publicKey == null ? "null" : Integer.toHexString(publicKey.hashCode());
     }
-
 }
+*/

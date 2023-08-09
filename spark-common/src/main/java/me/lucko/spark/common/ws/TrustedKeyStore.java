@@ -18,8 +18,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.ws;
+/*
+ * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
+ */
 
+package me.lucko.spark.common.ws;
+//TODO:Fix sockets
+/*
 import me.lucko.spark.common.util.Configuration;
 
 import java.security.KeyPair;
@@ -34,19 +39,19 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-/**
+**
  * A store of trusted public keys.
- */
+ *
 public class TrustedKeyStore {
     private static final String TRUSTED_KEYS_OPTION = "trustedKeys";
 
-    /** The spark configuration */
+    ** The spark configuration *
     private final Configuration configuration;
-    /** Gets the local public/private key */
+    ** Gets the local public/private key *
     private final CompletableFuture<KeyPair> localKeyPair;
-    /** A set of remote public keys to trust */
+    ** A set of remote public keys to trust *
     private final Set<PublicKey> remoteTrustedKeys;
-    /** A mpa of pending remote public keys */
+    ** A mpa of pending remote public keys *
     private final Map<String, PublicKey> remotePendingKeys = new HashMap<>();
 
     public TrustedKeyStore(Configuration configuration) {
@@ -56,50 +61,50 @@ public class TrustedKeyStore {
         readTrustedKeys();
     }
 
-    /**
+    **
      * Gets the local public key.
      *
      * @return the local public key
-     */
+     *
     public PublicKey getLocalPublicKey() {
         return this.localKeyPair.join().getPublic();
     }
 
-    /**
+    **
      * Gets the local private key.
      *
      * @return the local private key
-     */
+     *
     public PrivateKey getLocalPrivateKey() {
         return this.localKeyPair.join().getPrivate();
     }
 
-    /**
+    **
      * Checks if a remote public key is trusted
      *
      * @param publicKey the public key
      * @return if the key is trusted
-     */
+     *
     public boolean isKeyTrusted(PublicKey publicKey) {
         return publicKey != null && this.remoteTrustedKeys.contains(publicKey);
     }
 
-    /**
+    **
      * Adds a pending public key to be trusted in the future.
      *
      * @param clientId the client id submitting the key
      * @param publicKey the public key
-     */
+     *
     public void addPendingKey(String clientId, PublicKey publicKey) {
         this.remotePendingKeys.put(clientId, publicKey);
     }
 
-    /**
+    **
      * Trusts a previously submitted remote public key
      *
      * @param clientId the id of the client that submitted the key
      * @return true if the key was found and trusted
-     */
+     *
     public boolean trustPendingKey(String clientId) {
         PublicKey key = this.remotePendingKeys.remove(clientId);
         if (key == null) {
@@ -111,9 +116,9 @@ public class TrustedKeyStore {
         return true;
     }
 
-    /**
+    **
      * Reads trusted keys from the configuration
-     */
+     *
     private void readTrustedKeys() {
         for (String encodedKey : this.configuration.getStringList(TRUSTED_KEYS_OPTION)) {
             try {
@@ -125,9 +130,9 @@ public class TrustedKeyStore {
         }
     }
 
-    /**
+    **
      * Writes trusted keys to the configuration
-     */
+     *
     private void writeTrustedKeys() {
         List<String> encodedKeys = this.remoteTrustedKeys.stream()
                 .map(key -> Base64.getEncoder().encodeToString(key.getEncoded()))
@@ -135,5 +140,5 @@ public class TrustedKeyStore {
 
         this.configuration.setStringList(TRUSTED_KEYS_OPTION, encodedKeys);
     }
-
 }
+ */

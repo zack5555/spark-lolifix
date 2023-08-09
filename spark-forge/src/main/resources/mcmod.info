@@ -1,0 +1,7 @@
+[{
+  "modid": "spark",
+  "name": "Spark Unforged",
+  "description": "${pluginDescription}",
+  "version": "${pluginVersion}",
+  "authors": ["Luck", "fonnymunkey"]
+}]
