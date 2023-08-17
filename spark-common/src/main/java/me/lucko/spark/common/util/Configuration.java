@@ -150,4 +150,27 @@ public final class Configuration {
         this.root.remove(path);
     }
 
+    public String getOrSaveString(String path, String def) {
+        if(!this.contains(path)) {
+            this.setString(path, def);
+            this.save();
+        }
+        return this.getString(path, def);
+    }
+
+    public boolean getOrSaveBoolean(String path, boolean def) {
+        if(!this.contains(path)) {
+            this.setBoolean(path, def);
+            this.save();
+        }
+        return this.getBoolean(path, def);
+    }
+
+    public int getOrSaveInteger(String path, int def) {
+        if(!this.contains(path)) {
+            this.setInteger(path, def);
+            this.save();
+        }
+        return this.getInteger(path, def);
+    }
 }

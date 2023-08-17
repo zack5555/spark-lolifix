@@ -45,7 +45,7 @@ public class BackgroundSamplerManager {
         this.configuration = configuration;
 
         PlatformInfo.Type type = this.platform.getPlugin().getPlatformInfo().getType();
-        this.enabled = type != PlatformInfo.Type.CLIENT && this.configuration.getBoolean(OPTION_ENABLED, type == PlatformInfo.Type.SERVER);
+        this.enabled = this.platform.getPlugin().runBackgroundProfiler() && this.configuration.getBoolean(OPTION_ENABLED, type == PlatformInfo.Type.SERVER);
     }
 
     public void initialise() {
@@ -103,13 +103,13 @@ public class BackgroundSamplerManager {
     private void startSampler() {
         boolean forceJavaEngine = this.configuration.getString(OPTION_ENGINE, "async").equals("java");
 
-        ThreadGrouper threadGrouper = ThreadGrouper.parseConfigSetting(this.configuration.getString(OPTION_THREAD_GROUPER, "by-pool"));
-        ThreadDumper threadDumper = ThreadDumper.parseConfigSetting(this.configuration.getString(OPTION_THREAD_DUMPER, "default"));
+        ThreadGrouper threadGrouper = ThreadGrouper.parseConfigSetting(this.configuration.getOrSaveString(OPTION_THREAD_GROUPER, "by-pool"));
+        ThreadDumper threadDumper = ThreadDumper.parseConfigSetting(this.configuration.getOrSaveString(OPTION_THREAD_DUMPER, "default"));
         if (threadDumper == null) {
             threadDumper = this.platform.getPlugin().getDefaultThreadDumper();
         }
 
-        int interval = this.configuration.getInteger(OPTION_INTERVAL, 10);
+        int interval = this.configuration.getOrSaveInteger(OPTION_INTERVAL, 10);
 
         Sampler sampler = new SamplerBuilder()
               .background(true)

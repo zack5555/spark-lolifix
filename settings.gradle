@@ -6,8 +6,8 @@ pluginManagement {
             url 'https://maven.minecraftforge.net/'
         }
         maven {
-            name 'Garden of Fancy'
-            url 'https://maven.gofancy.wtf/releases'
+            name 'SpongePowered'
+            url = 'https://repo.spongepowered.org/maven'
         }
     }
 }

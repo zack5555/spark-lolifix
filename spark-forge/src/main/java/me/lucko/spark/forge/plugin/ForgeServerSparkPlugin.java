@@ -40,6 +40,7 @@ import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import me.lucko.spark.forge.ForgeWorldInfoProvider;
 
+import me.lucko.spark.forge.mixin.MinecraftServerAccessorMixin;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -75,10 +76,10 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements ICommand
         return this.gameThreadDumper;
     }
 
-    public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
+    private ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
-        this.gameThreadDumper = new ThreadDumper.Specific(server.serverThread);
+        this.gameThreadDumper = new ThreadDumper.Specific(((MinecraftServerAccessorMixin)server).getServerThread());
     }
 
     @Override
@@ -93,16 +94,14 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements ICommand
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
-        String[] proc = processArgs(args, false);//, "/spark", "spark");
-        //if(proc == null) return;
+        String[] proc = processArgs(args, false);
 
         this.platform.executeCommand(new ForgeCommandSender(sender, this), proc);
     }
 
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
-        String[] proc = processArgs(args, true);//, "/spark", "spark");
-        //if(proc == null) return Collections.emptyList();
+        String[] proc = processArgs(args, true);
 
         return generateSuggestions(new ForgeCommandSender(sender, this), proc);
     }
@@ -124,6 +123,9 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements ICommand
             Stream.of(this.server)
         ).map(sender -> new ForgeCommandSender(sender, this));
     }
+
+    @Override
+    public boolean runBackgroundProfiler() { return true; }
 
     @Override
     public void executeSync(Runnable task) {

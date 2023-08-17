@@ -47,6 +47,10 @@ public final class Activity {
         return new Activity(user.toData(), time, type, DATA_TYPE_FILE, filePath);
     }
 
+    public static Activity fileActivityManual(CommandSender.Data data, long time, String type, String filePath) {
+        return new Activity(data, time, type, DATA_TYPE_FILE, filePath);
+    }
+
     private Activity(CommandSender.Data user, long time, String type, String dataType, String dataValue) {
         this.user = user;
         this.time = time;

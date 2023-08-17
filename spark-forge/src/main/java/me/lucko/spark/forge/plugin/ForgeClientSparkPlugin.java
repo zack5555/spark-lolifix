@@ -36,6 +36,7 @@ import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import me.lucko.spark.forge.ForgeWorldInfoProvider;
 
+import me.lucko.spark.forge.mixin.MinecraftAccessorMixin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
@@ -69,8 +70,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements ICommand
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
-        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.thread);
-        //this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
+        this.gameThreadDumper = new ThreadDumper.Specific(((MinecraftAccessorMixin)minecraft).getThread());
     }
 
     @Override
@@ -80,16 +80,14 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements ICommand
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
-        String[] proc = processArgs(args, false);//, "sparkc", "sparkclient");
-        //if(proc == null) return;
+        String[] proc = processArgs(args, false);
 
         this.platform.executeCommand(new ForgeCommandSender(sender, this), proc);
     }
 
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
-        String[] proc = processArgs(args, true);//, "/sparkc", "/sparkclient");
-        //if(proc == null) return Collections.emptyList();
+        String[] proc = processArgs(args, true);
 
         return generateSuggestions(new ForgeCommandSender(sender, this), proc);
     }

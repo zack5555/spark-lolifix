@@ -62,9 +62,11 @@ import me.lucko.spark.common.util.TemporaryFiles;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -126,8 +128,8 @@ public class SparkPlatform {
         this.temporaryFiles = new TemporaryFiles(this.plugin.getPluginDirectory().resolve("tmp"));
         this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
 
-        this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
-        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://spark-usercontent.lucko.me/");
+        this.viewerUrl = this.configuration.getOrSaveString("viewerUrl", "https://spark.lucko.me/");
+        String bytebinUrl = this.configuration.getOrSaveString("bytebinUrl", "https://spark-usercontent.lucko.me/");
         //TODO:Fix sockets
         //String bytesocksHost = this.configuration.getString("bytesocksHost", "spark-usersockets.lucko.me");
 
@@ -137,7 +139,7 @@ public class SparkPlatform {
         //TODO:Fix sockets
         //this.trustedKeyStore = new TrustedKeyStore(this.configuration);
 
-        this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
+        this.disableResponseBroadcast = this.configuration.getOrSaveBoolean("disableResponseBroadcast", false);
 
         this.commandModules = ImmutableList.of(
                 new SamplerModule(),
@@ -313,7 +315,7 @@ public class SparkPlatform {
     }
 
     public Path resolveSaveFile(String prefix, String extension) {
-        Path pluginFolder = this.plugin.getPluginDirectory();
+        Path pluginFolder = Paths.get(this.plugin.getPluginDirectory() + File.separator + "data");
         try {
             Files.createDirectories(pluginFolder);
         } catch (IOException e) {

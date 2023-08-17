@@ -203,6 +203,13 @@ public interface SparkPlugin {
      */
     PlatformInfo getPlatformInfo();
 
+    /**
+     * Whether this plugin should be able to run the background profiler
+     *
+     * @return should this plugin run background profiler
+     */
+    default boolean runBackgroundProfiler() { return false; }
+
     default void registerApi(Spark api) {
 
     }

@@ -18,46 +18,45 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Modified on 8/9/2023 by fonnymunkey under GNU GPLv3 for 1.12.2 backport
- */
-
 package me.lucko.spark.forge.plugin;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.sampler.source.SourceMetadata;
+import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
+import me.lucko.spark.common.sampler.*;
 import me.lucko.spark.common.util.SparkThreadFactory;
-import me.lucko.spark.forge.ForgeClassSourceLookup;
-import me.lucko.spark.forge.ForgeCommandSender;
+import me.lucko.spark.forge.ForgePlatformInfo;
+import me.lucko.spark.forge.ForgeServerConfigProvider;
 import me.lucko.spark.forge.ForgeSparkMod;
-
-import net.minecraft.command.ICommandSender;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
-public abstract class ForgeSparkPlugin implements SparkPlugin {
+public class ForgeLoadingSparkPlugin implements SparkPlugin {
 
-    private final ForgeSparkMod mod;
+    private final boolean isClient = FMLLaunchHandler.side() == Side.CLIENT;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
     protected SparkPlatform platform;
 
-    protected ForgeSparkPlugin(ForgeSparkMod mod) {
-        this.mod = mod;
+    protected ForgeLoadingSparkPlugin() {
         this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
+    }
+
+    public static ForgeLoadingSparkPlugin register() {
+        ForgeLoadingSparkPlugin plugin = new ForgeLoadingSparkPlugin();
+        plugin.enable();
+        return plugin;
     }
 
     public void enable() {
@@ -70,7 +69,20 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
         this.scheduler.shutdown();
     }
 
-    public abstract boolean hasPermission(ICommandSender sender, String permission);
+    public SparkPlatform getPlatform() {
+        return this.platform;
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return ThreadDumper.ALL;
+        //return new ThreadDumper.Specific(Thread.currentThread());
+    }
+
+    @Override
+    public ServerConfigProvider createServerConfigProvider() {
+        return isClient ? null : new ForgeServerConfigProvider();
+    }
 
     @Override
     public String getVersion() {
@@ -80,6 +92,16 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     @Override
     public Path getPluginDirectory() {
         return ForgeSparkMod.getConfigDirectory();
+    }
+
+    @Override
+    public String getCommandName() {
+        return null;
+    }
+
+    @Override
+    public Stream<? extends CommandSender> getCommandSenders() {
+        return Stream.empty();
     }
 
     @Override
@@ -101,26 +123,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     }
 
     @Override
-    public ClassSourceLookup createClassSourceLookup() {
-        return new ForgeClassSourceLookup();
-    }
-
-    @Override
-    public Collection<SourceMetadata> getKnownSources() {
-        return SourceMetadata.gather(
-                Loader.instance().getActiveModList(),
-                ModContainer::getModId,
-                ModContainer::getVersion,
-                mod -> mod.getMetadata().getAuthorList()
-        );
-    }
-
-    protected List<String> generateSuggestions(ForgeCommandSender sender, String[] args) {
-        return this.platform.tabCompleteCommand(sender, args);
-    }
-
-    protected static String[] processArgs(String[] args, boolean tabComplete) {//, String... aliases) {
-        String[] split = Arrays.stream(args).filter(c -> tabComplete || (!c.trim().isEmpty())).toArray(String[]::new);
-        return split;
+    public PlatformInfo getPlatformInfo() {
+        return this.isClient ? new ForgePlatformInfo(PlatformInfo.Type.CLIENT) : new ForgePlatformInfo(PlatformInfo.Type.SERVER);
     }
 }

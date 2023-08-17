@@ -63,6 +63,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
@@ -470,6 +471,29 @@ public class SamplerModule implements CommandModule {
                 resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
                 e.printStackTrace();
             }
+        }
+    }
+
+    /**
+     * Manually save a sample with a given prefix
+     *
+     * @param platform active platform
+     * @param sampler target sampler
+     * @param exportProps sampler export properties
+     * @param prefix save file prefix
+     */
+    public static void handleManualSaveFile(SparkPlatform platform, Sampler sampler, Sampler.ExportProps exportProps, String prefix) {
+        SparkSamplerProtos.SamplerData output = sampler.toProto(platform, exportProps);
+        Path file = platform.resolveSaveFile(prefix, "sparkprofile");
+        try {
+            Files.write(file, output.toByteArray());
+            platform.getPlugin().log(Level.INFO, "Loading Profiler data has been saved to: " + file);
+            platform.getPlugin().log(Level.INFO, "You can view the file using the web app @ " + platform.getViewerUrl());
+
+            platform.getActivityLog().addToLog(Activity.fileActivityManual(new CommandSender.Data("LoadingProfiler", null), System.currentTimeMillis(), "Loading", file.toString()));
+        } catch (IOException e) {
+            platform.getPlugin().log(Level.WARNING, "Loading Profiler has encountered an error while saving data: " + prefix);
+            e.printStackTrace();
         }
     }
 

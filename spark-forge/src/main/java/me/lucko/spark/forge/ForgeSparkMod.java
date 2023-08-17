@@ -25,17 +25,19 @@
 package me.lucko.spark.forge;
 
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
+import me.lucko.spark.forge.plugin.ForgeLoadingSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
+import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Mod(
         modid = "spark",
@@ -45,20 +47,16 @@ import java.nio.file.Path;
 )
 public class ForgeSparkMod {
 
-    private Path configDirectory;
+    private static final Path configDirectory = Paths.get(new File("config").toPath() + File.separator + "spark");
     private ForgeServerSparkPlugin activeServerPlugin;
+    private static ForgeLoadingSparkPlugin activeLoadingPlugin;
 
-    public ForgeSparkMod() {
-        //ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
-    }
-
-    public String getVersion() {
+    public static String getVersion() {
         return ForgeSparkMod.class.getAnnotation(Mod.class).version();
     }
 
-    @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent e) {
-        this.configDirectory = e.getModConfigurationDirectory().toPath();
+    public static Path getConfigDirectory() {
+        return configDirectory;
     }
 
     @Mod.EventHandler
@@ -81,10 +79,24 @@ public class ForgeSparkMod {
         }
     }
 
-    public Path getConfigDirectory() {
-        if (this.configDirectory == null) {
-            throw new IllegalStateException("Config directory not set");
+    public static void startLoadingPlugin() {
+        activeLoadingPlugin = ForgeLoadingSparkPlugin.register();
+        //Register first to init config, then check for enable/disable
+        if(!ForgeSparkMod.getActiveLoadingPlugin().getPlatform().getConfiguration().getOrSaveBoolean("loadingProfiler_ENABLED", false)) {
+            activeLoadingPlugin.disable();
+            activeLoadingPlugin = null;
         }
-        return this.configDirectory;
+    }
+
+    public static ForgeLoadingSparkPlugin getActiveLoadingPlugin() {
+        return activeLoadingPlugin;
+    }
+
+    public static void endLoadingPlugin() {
+        if(activeLoadingPlugin != null) {
+            ForgeLoadingSamplerModule.clearHangingSamplers(ForgeSparkMod.getActiveLoadingPlugin());
+            activeLoadingPlugin.disable();
+            activeLoadingPlugin = null;
+        }
     }
 }

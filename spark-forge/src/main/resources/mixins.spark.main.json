@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "me.lucko.spark.forge.mixin",
+  "refmap": "mixins.spark.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "target": "@env(INIT)",
+  "minVersion": "0.8",
+  "mixins": [
+    "LoadControllerMixin"
+  ],
+  "injectors": {
+    "maxShiftBy": 10
+  }
+}
