@@ -14,7 +14,7 @@ subprojects {
     apply plugin: 'org.cadixdev.licenser'
 
     ext {
-        baseVersion = '1.11'
+        baseVersion = '1.5.2'
         //patchVersion = determinePatchVersion()
         patchVersion = '1'
         pluginVersion = baseVersion + '.' + patchVersion
