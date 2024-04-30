@@ -1,4 +1,4 @@
-this is a simple fork to fix LoliASM from stoping minecraft starting.
+this is a simple fork to fix LoliASM from stopping minecraft starting.
 
 <h2 align="center">
 	<img
